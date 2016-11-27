@@ -23,7 +23,7 @@ public ClientHandler extends Thread{
     public   ClientHandler (Socket c) {
         this.c = c;
         try{
-            myconn = DriverManager.getConnection("jdbc:mysql://localhost:3306/bankingsystem","root","");
+            myconn = DriverManager.getConnection("jdbc:mysql://localhost:3306/BankingSystem","root","");
             mystat = myconn.createStatement();
         }catch(Exception f)
         {
