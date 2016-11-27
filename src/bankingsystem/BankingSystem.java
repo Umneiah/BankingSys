@@ -221,7 +221,23 @@ public ClientHandler extends Thread{
 public class BankingSystem{
    
     public static void main(String[] args) {
-        // TODO code application logic here
+        try {
+            //1.Create Server Socket
+            ServerSocket server = new ServerSocket(1234);
+            while (true) {
+                //2.accept connection
+                Socket c = server.accept();
+                System.out.println("Client Arrived");
+                ClientHandler ch = new ClientHandler(c);
+                ch.start();
+
+            }
+            //6.Close the server if needed
+            //server.close();
+
+        } catch (Exception e) {
+            System.out.println("Something Went Wrong");
+        }
     }
     
 }
