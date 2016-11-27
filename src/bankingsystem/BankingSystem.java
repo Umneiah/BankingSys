@@ -16,7 +16,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.net.*;
 public ClientHandler extends Thread{
-         Socket c;
+    Socket c;
     Connection myconn = null;
     Statement mystat = null;
     ResultSet myres = null;
@@ -24,9 +24,9 @@ public ClientHandler extends Thread{
     {
         
     }
-    public static void Login()
+    public static void Login(String ID , String pass)
     {
-        
+         
     }
     public static void Deposit()
     {
@@ -39,6 +39,10 @@ public ClientHandler extends Thread{
     public static void GetTransHistory()
     {
         
+    }
+    public static void transfer(String id1 , String id2 , String amount,String bank_id)
+    {
+             
     }
     public   ClientHandler (Socket c) {
         this.c = c;
@@ -56,20 +60,47 @@ public ClientHandler extends Thread{
                     = new DataInputStream(c.getInputStream());
             DataOutputStream dos
                     = new DataOutputStream(c.getOutputStream());
-                String s = dis.readUTF();
+                String id = dis.readUTF();
                 String p = dis.readUTF();
-                String amount = checkVaild(s,p);
+                String BalanceAndName = Login(s,p);
+                String name = "";
+                String pass = "";
+                 if(!BalanceAndName.equals("no"))
+                 {
+                    String n[] = BalanceAndName.split(" ");
+                   name = n[0];
+                   pass = n[1]; 
+                   dos.WriteUTF(name);
+                   dos.WriteUTF(pass);
+                 }else{
+                      dos.WriteUTF("no");
+                 }
+                 while(true)
+                 {
+                     String amount = dis.readUTF();
+                     String withdraw_or_deposite_or_tran = dis.readUTF();
+                     String h ="";
+                     
+                    if(withdraw_or_deposite-or_tran.equals("w"))
+                     {
+                        h = withdraw(amount,id);
+                     }else if(withdraw_or_deposite-or_tran.equals("d"))
+                     {
+                         h = Deposit(amount,id);
+                     }else if(withdraw_or_deposite-or_tran.equals("t"))
+                     {
+                          h = GetTransHistory(id);
+                     }else if(withdraw_or_deposite-or_tran.equals("f"))
+                     {
+                         String id2 = dis.readUTF();
+                         String bank_id = dis.readUtf();
+                         h =  transfet(s,id2,amount,bank_id);    
+                     }
+                     dos.writeUTF(h);
+                          
+                 }
+               
                 
-                dos.writeUTF(amount);
-                
-                String a = dis.readUTF();
-                String withdraw_or_deposite = dis.readUTF();
-                String h ="";
-                if(withdraw_or_deposite.equals("w"))
-                {
-                   h = withdraw(a,s);
-                }
-                dos.writeUTF(h);
                c.close();
 
         } 
