@@ -73,11 +73,11 @@ public ClientHandler extends Thread{
             ResultSet result = mystat.executeQuery(qur);
             result.next();
             String Current = result.getString("balance");
-            if(Integer.parseInt(Current) >= Integer.parseInt(amount)){
-                int curr = Integer.parseInt(Current) - Integer.parseInt(amount);
+            if(Float.parseInt(Current) >= Float.parseInt(amount)){
+                float curr = Float.parseInt(Current) - Float.parseInt(amount);
                 String UpQur="UPDATE client SET balance='"+curr+"' WHERE id='"+id+"'";
                 mystat.executeUpdate(UpQur);
-                return Integer.toString(curr);
+                return Float.toString(curr);
             }
             else
             {
@@ -116,15 +116,15 @@ public ClientHandler extends Thread{
             ResultSet result = mystat.executeQuery(qur);
             result.next();
             String Current = result.getString("balance");
-            if(Integer.parseInt(Current) >= Integer.parseInt(amount)){
-                int curr1 = Integer.parseInt(Current) - Integer.parseInt(amount);
+            if(Float.parseInt(Current) >= Float.parseInt(amount)){
+                float curr1 = Float.parseInt(Current) - Float.parseInt(amount);
                 String UpQur="UPDATE client SET balance='"+curr1+"' WHERE id='"+id1+"'";
                 mystat.executeUpdate(UpQur);
                 String qur3="SELECT balance FROM client WHERE id = '"+id2+"'";
                 ResultSet result2 = mystat.executeQuery(qur3);
                 result2.next();
                 String Current2 = result2.getString("balance");
-                int curr2 = Integer.parseInt(Current2) + Integer.parseInt(amount);
+                float curr2 = Float.parseInt(Current2) + Float.parseInt(amount);
                 String UpQur2="UPDATE client SET balance='"+curr2+"' WHERE id='"+id2+"'";
                 mystat.executeUpdate(UpQur2);
                 Date date = new Date();
