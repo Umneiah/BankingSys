@@ -29,9 +29,22 @@ public ClientHandler extends Thread{
         {
         }   
     }
-    public static void Login(String ID , String pass)
+    public String Login(String ID , String pass)
     {
-         
+        ResultSet result;
+         try
+         {
+             String qur="SELECT name, balance FROM client WHERE id = '"+ID+"' AND passwor='"+pass+"'";
+             result = mystat.executeQuery(qur);
+             result.next();
+             String name = result.getString("name");
+             String balance = result.getString("balance");
+             return name+" "+balance;
+         }
+         catch(Exception f)
+         {
+            return "no";
+         }
     }
     public  String Deposit(String amount,String i)
     {
@@ -52,9 +65,29 @@ public ClientHandler extends Thread{
         }
         return new_balance;
     }
-    public static void Withdraw()
+    public String Withdraw(String amount, String id)
     {
-        
+        try
+        {
+            String qur="SELECT balance FROM client WHERE id = '"+id+"'";
+            ResultSet result = mystat.executeQuery(qur);
+            result.next();
+            String Current = result.getString("balance");
+            if(Integer.parseInt(Current) >= Integer.parseInt(amount)){
+                int curr = Integer.parseInt(Current) - Integer.parseInt(amount);
+                String UpQur="UPDATE client SET balance='"+curr+"' WHERE id='"+id+"'";
+                mystat.executeUpdate(UpQur);
+                return Integer.toString(curr);
+            }
+            else
+            {
+                return "no";
+            }
+        }
+        catch(Exception f)
+        {
+            return "no";
+        }
     }
     public  Vector<String>  GetTransHistory(String i)
     {
@@ -75,9 +108,39 @@ public ClientHandler extends Thread{
         return history;
         
     }
-    public static void transfer(String id1 , String id2 , String amount,String bank_id)
+    public String transfer(String id1 , String id2 , String amount,String bank_id)
     {
-             
+        try
+        {
+            String qur="SELECT balance FROM client WHERE id = '"+id1+"'";
+            ResultSet result = mystat.executeQuery(qur);
+            result.next();
+            String Current = result.getString("balance");
+            if(Integer.parseInt(Current) >= Integer.parseInt(amount)){
+                int curr1 = Integer.parseInt(Current) - Integer.parseInt(amount);
+                String UpQur="UPDATE client SET balance='"+curr1+"' WHERE id='"+id1+"'";
+                mystat.executeUpdate(UpQur);
+                String qur3="SELECT balance FROM client WHERE id = '"+id2+"'";
+                ResultSet result2 = mystat.executeQuery(qur3);
+                result2.next();
+                String Current2 = result2.getString("balance");
+                int curr2 = Integer.parseInt(Current2) + Integer.parseInt(amount);
+                String UpQur2="UPDATE client SET balance='"+curr2+"' WHERE id='"+id2+"'";
+                mystat.executeUpdate(UpQur2);
+                Date date = new Date();
+                String InsQur ="INSERT INTO transication (sender,reciever,amount,dateOfSend) VALUES ('"+id1+"','"+id2+"','"+amount+"','"+date.toString()+"')";
+                mystat.executeUpdate(InsQur);
+                return "ok";
+            }
+            else
+            {
+                return "no";
+            }
+        }
+        catch(SQLException | NumberFormatException f)
+        {
+            return "no";
+        }
     }
     public   ClientHandler (Socket c) {
         this.c = c;
