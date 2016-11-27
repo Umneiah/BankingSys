@@ -20,6 +20,26 @@ public ClientHandler extends Thread{
     Connection myconn = null;
     Statement mystat = null;
     ResultSet myres = null;
+    public static void Register()
+    {
+        
+    }
+    public static void Login()
+    {
+        
+    }
+    public static void Deposit()
+    {
+        
+    }
+    public static void Withdraw()
+    {
+        
+    }
+    public static void GetTransHistory()
+    {
+        
+    }
     public   ClientHandler (Socket c) {
         this.c = c;
         try{
