@@ -60,6 +60,15 @@ public ClientHandler extends Thread{
                     = new DataInputStream(c.getInputStream());
             DataOutputStream dos
                     = new DataOutputStream(c.getOutputStream());
+                String l_or_r = dis.readUTF();
+                if(l_or_r.equals("r")
+                {
+                    String username = dis.readUTF();
+                    String password_of_register = dis.readUTF();
+                    String balance = dis.readUTF();
+                    String bank_id_of_register = dis.readUTF();
+                    Register(username,passsword_of_register,balance,bank_id_of_register);
+                }
                 String id = dis.readUTF();
                 String p = dis.readUTF();
                 String BalanceAndName = Login(s,p);
