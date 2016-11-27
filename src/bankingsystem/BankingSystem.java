@@ -89,17 +89,21 @@ public ClientHandler extends Thread{
             return "no";
         }
     }
-    public  Vector<String>  GetTransHistory(String i)
+    public  String  GetTransHistory(String i)
     {
-         Vector <String> history =history = new Vector<String>();
+         String history = "";
          
         try{
             myres = mystat.executeQuery("select * from transication where sender = " + i);
             while(myres.next())
             {
-                String out= myres.getString("sender")+ " " + myres.getString("reciver") 
-                          + " " +myres.getString("amount") + " " + myres.getString("date");
-                history.addElement(out);   
+                int s= myres.getInt("sender");
+                int r = myres.getInt("reciever");
+                float amount = myres.getFloat("amount");
+                String date = myres.getString("dateOfSend");
+                String out = Integer.toString(s)+" "+Integer.toString(r)+" "
+                        +" "+Float.toString(amount)+date+",";
+                history = history + out;    
             }
         }catch(Exception e)
         {
