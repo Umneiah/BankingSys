@@ -24,7 +24,7 @@ public ClientHandler extends Thread{
             String bank_id_of_register)
     {
         try{
-             mystat.executeUpdate("insert into client (name,passwor,balance,bank_id) values ('"+username+"','"+passsword_of_register+"',"+balance+"',"+bank_id_of_register+")");
+             mystat.executeUpdate("insert into client (name,passwor,balance,bank_id) values ('"+username+"','"+passsword_of_register+"',"+balance+","+bank_id_of_register+")");
         }catch(Exception r)
         {
         }   
