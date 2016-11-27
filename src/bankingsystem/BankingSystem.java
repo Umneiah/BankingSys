@@ -20,24 +20,59 @@ public ClientHandler extends Thread{
     Connection myconn = null;
     Statement mystat = null;
     ResultSet myres = null;
-    public static void Register()
+   public void Register(String username,String passsword_of_register,String balance,
+            String bank_id_of_register)
     {
-        
+        try{
+             mystat.executeUpdate("insert into client (name,passwor,balance,bank_id) values ('"+username+"','"+passsword_of_register+"',"+balance+"',"+bank_id_of_register+")");
+        }catch(Exception r)
+        {
+        }   
     }
     public static void Login(String ID , String pass)
     {
          
     }
-    public static void Deposit()
+    public  String Deposit(String amount,String i)
     {
-        
+         String new_balance="";
+        try{
+          myres = mystat.executeQuery("select balance from client where id = " + i);
+          myres.next();
+          float current_balance ;
+          current_balance = myres.getFloat("balance");
+          float k = Float.valueOf(amount);
+          current_balance = current_balance + k ; // update balance 
+          new_balance = Float.toString(current_balance); // convert it to string to use it in query
+          mystat.executeUpdate("update client set balance = "+new_balance +"where id = " +i);
+          
+        }catch (Exception e)
+        {
+            
+        }
+        return new_balance;
     }
     public static void Withdraw()
     {
         
     }
-    public static void GetTransHistory()
+    public  Vector<String>  GetTransHistory(String i)
     {
+         Vector <String> history =history = new Vector<String>();
+         
+        try{
+            myres = mystat.executeQuery("select * from transication where sender = " + i);
+            while(myres.next())
+            {
+                String out= myres.getString("sender")+ " " + myres.getString("reciver") 
+                          + " " +myres.getString("amount") + " " + myres.getString("date");
+                history.addElement(out);   
+            }
+        }catch(Exception e)
+        {
+            
+        }
+        return history;
         
     }
     public static void transfer(String id1 , String id2 , String amount,String bank_id)
