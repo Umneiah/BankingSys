@@ -12,20 +12,24 @@ package bankingsystem;
 import java.sql.*;
 import java.io.*;
 import java.util.*;
+import java.util.Date;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.net.*;
-public ClientHandler extends Thread{
+class ClientHandler extends Thread
+{
     Socket c;
     Connection myconn = null;
     Statement mystat = null;
     ResultSet myres = null;
-   public void Register(String username,String passsword_of_register,String balance,
+    int ServerId = 1;
+    public void Register(String username,String passsword_of_register,String balance,
             String bank_id_of_register)
     {
         try{
              mystat.executeUpdate("insert into client (name,passwor,balance,bank_id) values ('"+username+"','"+passsword_of_register+"',"+balance+","+bank_id_of_register+")");
-        }catch(Exception r)
+        }
+        catch(SQLException | NumberFormatException e)
         {
         }   
     }
@@ -41,7 +45,7 @@ public ClientHandler extends Thread{
              String balance = result.getString("balance");
              return name+" "+balance;
          }
-         catch(Exception f)
+         catch(SQLException | NumberFormatException e)
          {
             return "no";
          }
@@ -59,7 +63,7 @@ public ClientHandler extends Thread{
           new_balance = Float.toString(current_balance); // convert it to string to use it in query
           mystat.executeUpdate("update client set balance = "+new_balance +"where id = " +i);
           
-        }catch (Exception e)
+        }catch (SQLException | NumberFormatException e)
         {
             
         }
@@ -67,14 +71,14 @@ public ClientHandler extends Thread{
     }
     public String Withdraw(String amount, String id)
     {
-        try
+         try
         {
             String qur="SELECT balance FROM client WHERE id = '"+id+"'";
             ResultSet result = mystat.executeQuery(qur);
             result.next();
             String Current = result.getString("balance");
-            if(Float.parseInt(Current) >= Float.parseInt(amount)){
-                float curr = Float.parseInt(Current) - Float.parseInt(amount);
+            if(Float.parseFloat(Current) >= Float.parseFloat(amount)){
+                float curr = Float.parseFloat(Current) - Float.parseFloat(amount);
                 String UpQur="UPDATE client SET balance='"+curr+"' WHERE id='"+id+"'";
                 mystat.executeUpdate(UpQur);
                 return Float.toString(curr);
@@ -84,7 +88,7 @@ public ClientHandler extends Thread{
                 return "no";
             }
         }
-        catch(Exception f)
+        catch(SQLException | NumberFormatException f)
         {
             return "no";
         }
@@ -120,111 +124,155 @@ public ClientHandler extends Thread{
             ResultSet result = mystat.executeQuery(qur);
             result.next();
             String Current = result.getString("balance");
-            if(Float.parseInt(Current) >= Float.parseInt(amount)){
-                float curr1 = Float.parseInt(Current) - Float.parseInt(amount);
-                String UpQur="UPDATE client SET balance='"+curr1+"' WHERE id='"+id1+"'";
-                mystat.executeUpdate(UpQur);
-                String qur3="SELECT balance FROM client WHERE id = '"+id2+"'";
-                ResultSet result2 = mystat.executeQuery(qur3);
-                result2.next();
-                String Current2 = result2.getString("balance");
-                float curr2 = Float.parseInt(Current2) + Float.parseInt(amount);
-                String UpQur2="UPDATE client SET balance='"+curr2+"' WHERE id='"+id2+"'";
-                mystat.executeUpdate(UpQur2);
-                Date date = new Date();
-                String InsQur ="INSERT INTO transication (sender,reciever,amount,dateOfSend) VALUES ('"+id1+"','"+id2+"','"+amount+"','"+date.toString()+"')";
-                mystat.executeUpdate(InsQur);
-                return "ok";
+            if(Float.parseFloat(Current) >= Float.parseFloat(amount))
+            {        
+                if(Integer.parseInt(bank_id) == ServerId)
+                {                
+                    float curr1 = Float.parseFloat(Current) - Float.parseFloat(amount);
+                    String UpQur="UPDATE client SET balance='"+curr1+"' WHERE id='"+id1+"'";
+                    mystat.executeUpdate(UpQur);
+                    String qur3="SELECT balance FROM client WHERE id = '"+id2+"'";
+                    ResultSet result2 = mystat.executeQuery(qur3);
+                    result2.next();
+                    String Current2 = result2.getString("balance");
+                    float curr2 = Float.parseFloat(Current2) + Float.parseFloat(amount);
+                    String UpQur2="UPDATE client SET balance='"+curr2+"' WHERE id='"+id2+"'";
+                    mystat.executeUpdate(UpQur2);
+                    Date date = new Date();
+                    String InsQur ="INSERT INTO transication (sender,reciever,amount,dateOfSend) VALUES ('"+id1+"','"+id2+"','"+amount+"','"+date.toString()+"')";
+                    mystat.executeUpdate(InsQur);
+                    return "ok";
+                }
+                else
+                {
+                    Socket client = new Socket("127.0.0.1", 1234);
+                    DataInputStream dis1 = new DataInputStream(client.getInputStream());
+                    DataOutputStream dos1 = new DataOutputStream(client.getOutputStream());
+                    dos1.writeUTF(id2);
+                    dos1.writeUTF(amount);
+                    float curr1 = Float.parseFloat(Current) - Float.parseFloat(amount);
+                    String UpQur="UPDATE client SET balance='"+curr1+"' WHERE id='"+id1+"'";
+                    mystat.executeUpdate(UpQur);
+                    Date date = new Date();
+                    String InsQur ="INSERT INTO transication (sender,reciever,amount,dateOfSend) VALUES ('"+id1+"','"+id2+"','"+amount+"','"+date.toString()+"')";
+                    mystat.executeUpdate(InsQur);
+                    return dis1.readUTF();
+                }
             }
             else
             {
                 return "no";
             }
         }
-        catch(SQLException | NumberFormatException f)
+        catch(NumberFormatException | SQLException | IOException g)
         {
             return "no";
         }
     }
-    public   ClientHandler (Socket c) {
+    public ClientHandler (Socket c) {
         this.c = c;
-        try{
+        try
+        {    
             myconn = DriverManager.getConnection("jdbc:mysql://localhost:3306/BankingSystem","root","");
             mystat = myconn.createStatement();
         }catch(Exception f)
         {
             
         }
-         public void run() {
+    }   
+    @Override
+    public void run() {
 
-        try {
-            DataInputStream dis
-                    = new DataInputStream(c.getInputStream());
-            DataOutputStream dos
-                    = new DataOutputStream(c.getOutputStream());
-                String l_or_r = dis.readUTF();
-                if(l_or_r.equals("r")
+        try 
+        {   
+            DataInputStream dis = new DataInputStream(c.getInputStream());
+            DataOutputStream dos = new DataOutputStream(c.getOutputStream());
+            String l_or_r = dis.readUTF();
+            if(l_or_r.equals("s"))
+            {
+                String id2 = dis.readUTF();
+                String amount = dis.readUTF();
+                try{
+                    
+                    String qur3="SELECT balance FROM client WHERE id = '"+id2+"'";
+                    ResultSet result2 = mystat.executeQuery(qur3);
+                    result2.next();
+                    String Current2 = result2.getString("balance");
+                    float curr2 = Float.parseFloat(Current2) + Float.parseFloat(amount);
+                    String UpQur2="UPDATE client SET balance='"+curr2+"' WHERE id='"+id2+"'";
+                    mystat.executeUpdate(UpQur2);
+                    dos.writeUTF("ok");
+                }
+                catch(SQLException | NumberFormatException | IOException d)
+                {
+                    dos.writeUTF("no");
+                }
+            }
+            else
+            {
+                if(l_or_r.equals("r"))
                 {
                     String username = dis.readUTF();
                     String password_of_register = dis.readUTF();
                     String balance = dis.readUTF();
                     String bank_id_of_register = dis.readUTF();
-                    Register(username,passsword_of_register,balance,bank_id_of_register);
+                    Register(username,password_of_register,balance,bank_id_of_register);
                 }
                 String id = dis.readUTF();
                 String p = dis.readUTF();
-                String BalanceAndName = Login(s,p);
+                String BalanceAndName = Login(id,p);
                 String name = "";
                 String pass = "";
-                 if(!BalanceAndName.equals("no"))
-                 {
+                if(!BalanceAndName.equals("no"))
+                {
                     String n[] = BalanceAndName.split(" ");
-                   name = n[0];
-                   pass = n[1]; 
-                   dos.WriteUTF(name);
-                   dos.WriteUTF(pass);
-                 }else{
-                      dos.WriteUTF("no");
-                 }
-                 while(true)
-                 {
-                     String amount = dis.readUTF();
-                     String withdraw_or_deposite_or_tran = dis.readUTF();
-                     String h ="";
-                     
-                    if(withdraw_or_deposite-or_tran.equals("w"))
-                     {
-                        h = withdraw(amount,id);
-                     }else if(withdraw_or_deposite-or_tran.equals("d"))
-                     {
-                         h = Deposit(amount,id);
-                     }else if(withdraw_or_deposite-or_tran.equals("t"))
-                     {
-                          h = GetTransHistory(id);
-                     }else if(withdraw_or_deposite-or_tran.equals("f"))
-                     {
-                         String id2 = dis.readUTF();
-                         String bank_id = dis.readUtf();
-                         h =  transfet(s,id2,amount,bank_id);    
-                     }
-                     dos.writeUTF(h);
-                          
-                 }
-               
-                
-               c.close();
+                    name = n[0];
+                    pass = n[1]; 
+                    dos.writeUTF(name);
+                    dos.writeUTF(pass);
+                }
+                else
+                {
+                    dos.writeUTF("no");
+                }
+                while(true)
+                {
+                    String amount = dis.readUTF();
+                    String withdraw_or_deposite_or_tran = dis.readUTF();
+                    String h ="";
+                    if(withdraw_or_deposite_or_tran.equals("w"))
+                    {
+                        h = Withdraw(amount,id);
+                    }
+                    else if(withdraw_or_deposite_or_tran.equals("d"))
+                    {
+                        h = Deposit(amount,id);
+                    }
+                    else if(withdraw_or_deposite_or_tran.equals("t"))
+                    {
+                        h = GetTransHistory(id);
+                    }
+                    else if(withdraw_or_deposite_or_tran.equals("f"))
+                    {
+                        String id2 = dis.readUTF();
+                        String bank_id = dis.readUTF();
+                        h =  transfer(id,id2,amount,bank_id);    
+                    }
+                    dos.writeUTF(h);
 
+                }
+            }
         } 
-        catch (Exception e) 
+        catch (IOException | NumberFormatException e) 
         {
             System.out.println("Something went wrong");
         }
 }
-    }
 }
 public class BankingSystem{
    
     public static void main(String[] args) {
+
         try {
             //1.Create Server Socket
             ServerSocket server = new ServerSocket(1234);
