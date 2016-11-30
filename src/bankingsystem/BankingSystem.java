@@ -23,14 +23,21 @@ class ClientHandler extends Thread
     Statement mystat = null;
     ResultSet myres = null;
     int ServerId = 1;
-    public void Register(String username,String passsword_of_register,String balance,
+    public String Register(String username,String passsword_of_register,String balance,
             String bank_id_of_register)
     {
-        try{
+        try
+        {
              mystat.executeUpdate("insert into client (name,passwor,balance,bank_id) values ('"+username+"','"+passsword_of_register+"',"+balance+","+bank_id_of_register+")");
+             String qur = "select id from client where name = '"+username+"' and passwor = '"+passsword_of_register+"' and balance = '"+balance+"' and bank_id = '"+bank_id_of_register+"'";
+             ResultSet res = mystat.executeQuery(qur);
+             res.next();
+             return res.getString("id");
+             
         }
         catch(SQLException | NumberFormatException e)
-        {
+        {   
+            return "no";
         }   
     }
     public String Login(String ID , String pass)
@@ -105,8 +112,8 @@ class ClientHandler extends Thread
                 int r = myres.getInt("reciever");
                 float amount = myres.getFloat("amount");
                 String date = myres.getString("dateOfSend");
-                String out = Integer.toString(s)+" "+Integer.toString(r)+" "
-                        +" "+Float.toString(amount)+date+",";
+                int BankId = myres.getInt("ReciverBankID");
+                String out = "You transfered "+ Float.toString(amount) +" To client ID: "+Integer.toString(r)+" in Bank: " +Integer.toString(BankId)+" at " +date+"\n";
                 history = history + out;    
             }
         }catch(Exception e)
@@ -139,24 +146,32 @@ class ClientHandler extends Thread
                     String UpQur2="UPDATE client SET balance='"+curr2+"' WHERE id='"+id2+"'";
                     mystat.executeUpdate(UpQur2);
                     Date date = new Date();
-                    String InsQur ="INSERT INTO transication (sender,reciever,amount,dateOfSend) VALUES ('"+id1+"','"+id2+"','"+amount+"','"+date.toString()+"')";
+                    String InsQur ="INSERT INTO transication (sender,reciever,amount,dateOfSend,ReciverBankID) VALUES ('"+id1+"','"+id2+"','"+amount+"','"+date.toString()+"','"+bank_id+"')";
                     mystat.executeUpdate(InsQur);
-                    return "ok";
+                    return Float.toString(curr1);
                 }
                 else
                 {
                     Socket client = new Socket("127.0.0.1", 1234);
                     DataInputStream dis1 = new DataInputStream(client.getInputStream());
                     DataOutputStream dos1 = new DataOutputStream(client.getOutputStream());
+                    dos1.writeUTF("s");
                     dos1.writeUTF(id2);
                     dos1.writeUTF(amount);
                     float curr1 = Float.parseFloat(Current) - Float.parseFloat(amount);
                     String UpQur="UPDATE client SET balance='"+curr1+"' WHERE id='"+id1+"'";
                     mystat.executeUpdate(UpQur);
                     Date date = new Date();
-                    String InsQur ="INSERT INTO transication (sender,reciever,amount,dateOfSend) VALUES ('"+id1+"','"+id2+"','"+amount+"','"+date.toString()+"')";
+                    String InsQur ="INSERT INTO transication (sender,reciever,amount,dateOfSend,ReciverBankID) VALUES ('"+id1+"','"+id2+"','"+amount+"','"+date.toString()+"','"+bank_id+"')";
                     mystat.executeUpdate(InsQur);
-                    return dis1.readUTF();
+                    if("ok".equals(dis1.readUTF()))
+                    {
+                        return Float.toString(curr1);
+                    }
+                    else
+                    {
+                        return "no";
+                    }
                 }
             }
             else
@@ -173,7 +188,7 @@ class ClientHandler extends Thread
         this.c = c;
         try
         {    
-            myconn = DriverManager.getConnection("jdbc:mysql://localhost:3306/BankingSystem","root","");
+            myconn = DriverManager.getConnection("jdbc:mysql://localhost:3306/BankingSystem","root","Microsoft880");
             mystat = myconn.createStatement();
         }catch(Exception f)
         {
@@ -210,56 +225,68 @@ class ClientHandler extends Thread
             }
             else
             {
-                if(l_or_r.equals("r"))
-                {
-                    String username = dis.readUTF();
-                    String password_of_register = dis.readUTF();
-                    String balance = dis.readUTF();
-                    String bank_id_of_register = dis.readUTF();
-                    Register(username,password_of_register,balance,bank_id_of_register);
-                }
-                String id = dis.readUTF();
-                String p = dis.readUTF();
-                String BalanceAndName = Login(id,p);
-                String name = "";
-                String pass = "";
-                if(!BalanceAndName.equals("no"))
-                {
-                    String n[] = BalanceAndName.split(" ");
-                    name = n[0];
-                    pass = n[1]; 
-                    dos.writeUTF(name);
-                    dos.writeUTF(pass);
-                }
-                else
-                {
-                    dos.writeUTF("no");
-                }
                 while(true)
                 {
-                    String amount = dis.readUTF();
-                    String withdraw_or_deposite_or_tran = dis.readUTF();
-                    String h ="";
-                    if(withdraw_or_deposite_or_tran.equals("w"))
+                    if(l_or_r.equals("r"))
                     {
-                        h = Withdraw(amount,id);
+                        String username = dis.readUTF();
+                        String password_of_register = dis.readUTF();
+                        String balance = dis.readUTF();
+                        String bank_id_of_register = dis.readUTF();
+                        String s =Register(username,password_of_register,balance,bank_id_of_register);
+                        dos.writeUTF(s);
                     }
-                    else if(withdraw_or_deposite_or_tran.equals("d"))
+                    String id = dis.readUTF();
+                    String p = dis.readUTF();
+                    String BalanceAndName = Login(id,p);
+                    String name = "";
+                    String pass = "";
+                    if(!BalanceAndName.equals("no"))
                     {
-                        h = Deposit(amount,id);
+                        String n[] = BalanceAndName.split(" ");
+                        name = n[0];
+                        pass = n[1]; 
+                        dos.writeUTF(name);
+                        dos.writeUTF(pass);
                     }
-                    else if(withdraw_or_deposite_or_tran.equals("t"))
+                    else
                     {
-                        h = GetTransHistory(id);
+                        dos.writeUTF("no");
                     }
-                    else if(withdraw_or_deposite_or_tran.equals("f"))
+                    while(true)
                     {
-                        String id2 = dis.readUTF();
-                        String bank_id = dis.readUTF();
-                        h =  transfer(id,id2,amount,bank_id);    
-                    }
-                    dos.writeUTF(h);
 
+                        String withdraw_or_deposite_or_tran = dis.readUTF();
+                        String h ="";
+                        if(withdraw_or_deposite_or_tran.equals("w"))
+                        {
+                            String amount = dis.readUTF();
+                            h = Withdraw(amount,id);
+                        }
+                        else if(withdraw_or_deposite_or_tran.equals("d"))
+                        {
+                            String amount = dis.readUTF();
+                            h = Deposit(amount,id);
+                        }
+                        else if(withdraw_or_deposite_or_tran.equals("t"))
+                        {
+                            h = GetTransHistory(id);
+                        }
+                        else if(withdraw_or_deposite_or_tran.equals("f"))
+                        {
+                            String amount = dis.readUTF();
+                            String id2 = dis.readUTF();
+                            String bank_id = dis.readUTF();
+                            h =  transfer(id,id2,amount,bank_id);    
+                        }
+                        else if(withdraw_or_deposite_or_tran.equals("x"))
+                        {
+                            l_or_r = dis.readUTF();
+                            break;
+                        }
+                        dos.writeUTF(h);
+
+                    }
                 }
             }
         } 
