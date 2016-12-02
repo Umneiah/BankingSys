@@ -247,27 +247,31 @@ class ClientHandler extends Thread
                             String password_of_register = dis.readUTF();
                             String balance = dis.readUTF();
                             String bank_id_of_register = dis.readUTF();
-                            String s =Register(username,password_of_register,balance,bank_id_of_register);
-                            dos.writeUTF(s);
-                        }
-                        id = dis.readUTF();
-                        String p = dis.readUTF();
-                        String BalanceAndName = Login(id,p);
-                        String name;
-                        String pass;
-                        if(!BalanceAndName.equals("no"))
-                        {
-                            String n[] = BalanceAndName.split(" ");
-                            name = n[0];
-                            pass = n[1]; 
-                            dos.writeUTF(name);
-                            dos.writeUTF(pass);
+                            id =Register(username,password_of_register,balance,bank_id_of_register);
+                            dos.writeUTF(id);
                             break;
                         }
                         else
                         {
-                            dos.writeUTF("no");
-                            l_or_r = dis.readUTF();
+                            id = dis.readUTF();
+                            String p = dis.readUTF();
+                            String BalanceAndName = Login(id,p);
+                            String name;
+                            String pass;
+                            if(!BalanceAndName.equals("no"))
+                            {
+                                String n[] = BalanceAndName.split(" ");
+                                name = n[0];
+                                pass = n[1]; 
+                                dos.writeUTF(name);
+                                dos.writeUTF(pass);
+                                break;
+                            }
+                            else
+                            {
+                                dos.writeUTF("no");
+                                l_or_r = dis.readUTF();
+                            }
                         }
                     }
                     OUTER:
