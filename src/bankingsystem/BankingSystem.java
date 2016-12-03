@@ -122,7 +122,7 @@ class ClientHandler extends Thread
                 int s = myres.getInt("sender");
                 float amount = myres.getFloat("amount");
                 String date = myres.getString("dateOfSend");
-                int BankId = myres.getInt("ReciverBankID");
+                int BankId = myres.getInt("SenderBankID");
                 String out = "You recieved "+ Float.toString(amount) +" $ From client ID: "+Integer.toString(s)+" registered in Bank: " +Integer.toString(BankId)+" at " +date+"\n";
                 history = history + out;    
             }
@@ -163,12 +163,15 @@ class ClientHandler extends Thread
                 }
                 else
                 {
-                    Socket client = new Socket("127.0.0.1", 1234);
+                    Socket client = new Socket("192.168.43.38", 1234);
                     DataInputStream dis1 = new DataInputStream(client.getInputStream());
                     DataOutputStream dos1 = new DataOutputStream(client.getOutputStream());
                     dos1.writeUTF("s");
+                    dos1.writeUTF(id1);
                     dos1.writeUTF(id2);
                     dos1.writeUTF(amount);
+                    dos1.writeUTF(bank_id);
+                    dos1.writeUTF(BankID);
                     float curr1 = Float.parseFloat(Current) - Float.parseFloat(amount);
                     String UpQur="UPDATE client SET balance='"+curr1+"' WHERE id='"+id1+"'";
                     mystat.executeUpdate(UpQur);
@@ -217,8 +220,11 @@ class ClientHandler extends Thread
             String l_or_r = dis.readUTF();
             if(l_or_r.equals("s"))
             {
+                String id1 = dis.readUTF();
                 String id2 = dis.readUTF();
                 String amount = dis.readUTF();
+                String bank_id = dis.readUTF();
+                String BankID = dis.readUTF();
                 try{
                     
                     String qur3="SELECT balance FROM client WHERE id = '"+id2+"'";
@@ -228,6 +234,9 @@ class ClientHandler extends Thread
                     float curr2 = Float.parseFloat(Current2) + Float.parseFloat(amount);
                     String UpQur2="UPDATE client SET balance='"+curr2+"' WHERE id='"+id2+"'";
                     mystat.executeUpdate(UpQur2);
+                    Date date = new Date();
+                    String InsQur ="INSERT INTO transication (sender,reciever,amount,dateOfSend,ReciverBankID,SenderBankID) VALUES ('"+id1+"','"+id2+"','"+amount+"','"+date.toString()+"','"+bank_id+"','"+BankID+"')";
+                    mystat.executeUpdate(InsQur);
                     dos.writeUTF("ok");
                 }
                 catch(SQLException | NumberFormatException | IOException d)
@@ -277,38 +286,55 @@ class ClientHandler extends Thread
                     OUTER:
                     while (true) {
                         String withdraw_or_deposite_or_tran = dis.readUTF();
-                        String h ="";
+                        String h;
                         switch (withdraw_or_deposite_or_tran) {
                             case "w":
                                 {
                                     String amount = dis.readUTF();
                                     h = Withdraw(amount,id);
+                                    dos.writeUTF(h);
                                     break;
                                 }
                             case "d":
                                 {
                                     String amount = dis.readUTF();
                                     h = Deposit(amount,id);
+                                    dos.writeUTF(h);
                                     break;
                                 }
                             case "t":
-                                h = GetTransHistory(id);
-                                break;
+                                    h = GetTransHistory(id);
+                                    dos.writeUTF(h);
+                                    break;
                             case "f":
                                 {
                                     String amount = dis.readUTF();
                                     String id2 = dis.readUTF();
                                     String bank_id = dis.readUTF();
                                     h =  transfer(id,id2,amount,bank_id);
+                                    dos.writeUTF(h);
                                     break;
                                 }
+                            case "u":
+                            {
+                                try{
+                                    myres = mystat.executeQuery("SELECT balance from client WHERE id = "+id);
+                                    myres.next();
+                                    String current_balance = myres.getString("balance");
+                                    dos.writeUTF(current_balance);
+                                }
+                                catch(SQLException | IOException e)
+                                {
+                                    
+                                }
+                                break;
+                            }
                             case "x":
                                 l_or_r = dis.readUTF();
                                 break OUTER;
                             default:
                                 break;
                         }
-                        dos.writeUTF(h);
                     }
                 }
             }
@@ -321,7 +347,6 @@ class ClientHandler extends Thread
             } catch (IOException ex) {
                 Logger.getLogger(ClientHandler.class.getName()).log(Level.SEVERE, null, ex);
             }
-            //System.out.println("Something went wrong");
         }
 }
 }
@@ -330,18 +355,14 @@ public class BankingSystem{
     public static void main(String[] args) {
 
         try {
-            //1.Create Server Socket
             ServerSocket server = new ServerSocket(1234);
             while (true) {
-                //2.accept connection
                 Socket c = server.accept();
                 System.out.println("Client Arrived");
                 ClientHandler ch = new ClientHandler(c);
                 ch.start();
 
             }
-            //6.Close the server if needed
-            //server.close();
 
         } catch (Exception e) {
             System.out.println("Something Went Wrong");
