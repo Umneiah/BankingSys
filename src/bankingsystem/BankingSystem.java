@@ -255,8 +255,7 @@ class ClientHandler extends Thread
                             String username = dis.readUTF();
                             String password_of_register = dis.readUTF();
                             String balance = dis.readUTF();
-                            String bank_id_of_register = dis.readUTF();
-                            id =Register(username,password_of_register,balance,bank_id_of_register);
+                            id =Register(username,password_of_register,balance,Integer.toString(ServerId));
                             dos.writeUTF(id);
                             break;
                         }
